@@ -4,9 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useWeb3 } from "@/components/providers/Web3Provider";
 import { DEFAULT_DEMO_ATTESTORS } from "@/lib/web3/config";
-import { combineShares } from "@/lib/crypto/shamir";
-import { decryptAsset } from "@/lib/crypto/aes";
-import { getEncryptedAssetLocally, getDemoFragmentsLocally } from "@/lib/storage/mockStorage";
 import {
   recordHeartbeatOnChain,
   initiateRecoveryOnChain,
@@ -14,9 +11,8 @@ import {
   approveRecoveryOnChain,
   cancelRecoveryOnChain,
   finalizeRecoveryOnChain,
-  getRecoveryStatusFromChain,
 } from "@/lib/web3/contractService";
-import { Shield, Key, AlertTriangle, CheckCircle2, Clock, Zap, Lock, RefreshCw, XCircle, FileText, Download, ArrowRight, ExternalLink } from "lucide-react";
+import { Shield, Key, AlertTriangle, CheckCircle2, Clock, Zap, Lock, RefreshCw, XCircle, FileText, ExternalLink, Activity, ArrowRight } from "lucide-react";
 
 export default function RecoveryCenterPage() {
   const { wallet, isDemoMode } = useWeb3();
@@ -41,7 +37,6 @@ export default function RecoveryCenterPage() {
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [lastTxHash, setLastTxHash] = useState<string>("");
 
-  const totalAttestors = 5;
   const threshold = 3;
   const currentApprovalCount = Object.values(approvals).filter(Boolean).length;
 
@@ -189,35 +184,74 @@ export default function RecoveryCenterPage() {
     <div className="space-y-8 py-4">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-surface-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white">Interactive Protocol Recovery Center</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">RECOVERY PROTOCOL</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-mono">
-              ASSET ID: #1
+              VAULT ID: #0001
             </span>
           </div>
-          <p className="text-slate-400 text-xs mt-1">
-            Simulate end-to-end inheritance recovery lifecycle: Inactivity → Request → Evidence → Threshold Attestation → Challenge Timer → Decryption.
+          <p className="text-slate-400 text-xs mt-1 font-mono">
+            A multi-stage authorization process protects every asset release.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleOwnerHeartbeat}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs shadow-lg shadow-indigo-600/20 transition flex items-center gap-1.5"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Reset / Owner Heartbeat</span>
+            <span>RESET / OWNER HEARTBEAT</span>
           </button>
+        </div>
+      </div>
+
+      {/* Top Banner: Protocol State Banner */}
+      <div className={`vault-card p-6 rounded-3xl border transition-all ${
+        protocolState === "CHALLENGE_PERIOD"
+          ? "vault-card-danger bg-rose-950/30 border-rose-500/50"
+          : protocolState === "RELEASED" || protocolState === "DECRYPTED"
+          ? "border-emerald-500/50 bg-emerald-950/20"
+          : "border-white/[0.08]"
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-mono font-bold text-lg ${
+              protocolState === "CHALLENGE_PERIOD"
+                ? "bg-rose-600 text-white animate-pulse"
+                : protocolState === "RELEASED" || protocolState === "DECRYPTED"
+                ? "bg-emerald-600 text-white"
+                : "bg-indigo-950 text-indigo-400 border border-indigo-700/50"
+            }`}>
+              {protocolState === "CHALLENGE_PERIOD" ? "⚠️" : protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "✓" : "🛡️"}
+            </div>
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold block">CURRENT PROTOCOL STATE</span>
+              <h2 className="text-xl font-bold font-mono text-white">
+                {protocolState === "ACTIVE" && "STATE: PROTECTED & ACTIVE"}
+                {protocolState === "RECOVERY_ELIGIBLE" && "STATE: OWNER INACTIVITY DETECTED"}
+                {protocolState === "RECOVERY_REQUESTED" && "STATE: RECOVERY REQUESTED"}
+                {protocolState === "EVIDENCE_COLLECTION" && "STATE: EVIDENCE SUBMITTED & ATTESTATION IN PROGRESS"}
+                {protocolState === "CHALLENGE_PERIOD" && "STATE: RECOVERY ACTIVE - CHALLENGE PERIOD RUNNING"}
+                {(protocolState === "RELEASED" || protocolState === "DECRYPTED") && "STATE: RECOVERY AUTHORIZED & ASSET RELEASED"}
+              </h2>
+            </div>
+          </div>
+
+          <div className="font-mono text-right text-xs">
+            <span className="text-slate-400 block text-[10px]">REQUIRED THRESHOLD</span>
+            <span className="text-amber-400 font-bold text-sm">3 OF 5 APPROVALS</span>
+          </div>
         </div>
       </div>
 
       {/* Transaction & Status Toast Banner */}
       {statusMessage && (
-        <div className="p-4 rounded-2xl bg-indigo-950 border border-indigo-500/50 text-indigo-200 text-xs font-mono flex items-center justify-between gap-3 animate-pulse">
+        <div className="p-4 rounded-xl bg-indigo-950/80 border border-indigo-500/50 text-indigo-200 text-xs font-mono flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-cyan-400 shrink-0" />
+            <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
             <span>{statusMessage}</span>
           </div>
           {lastTxHash && (
@@ -225,40 +259,44 @@ export default function RecoveryCenterPage() {
               href={`https://testnet.bscscan.com/tx/${lastTxHash}`}
               target="_blank"
               rel="noreferrer"
-              className="text-cyan-300 underline font-bold flex items-center gap-1 shrink-0"
+              className="text-cyan-300 underline font-bold flex items-center gap-1 shrink-0 text-[11px]"
             >
-              <span>View Tx</span>
+              <span>VIEW TX</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
         </div>
       )}
 
-      {/* Lifecycle Progress Bar */}
-      <div className="glass-panel p-6 rounded-3xl border border-surface-border space-y-4">
+      {/* Protocol Visual Timeline */}
+      <div className="vault-card p-6 rounded-3xl border border-white/[0.08] space-y-4">
         <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest">
-          Protocol Lifecycle State Transition
+          AUTHORIZATION TIMELINE STAGES
         </h3>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-mono">
-          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "ACTIVE" ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-900/60 border-white/5 text-slate-400"}`}>
-            1. ACTIVE
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[11px] font-mono">
+          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "ACTIVE" ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-950/60 border-white/5 text-emerald-400"}`}>
+            01 INACTIVITY {inactivityTimer === 0 ? "✓" : `(${inactivityTimer}s)`}
           </div>
 
-          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "RECOVERY_ELIGIBLE" || protocolState === "RECOVERY_REQUESTED" ? "bg-amber-500 text-slate-950 border-amber-400 font-bold" : "bg-slate-900/60 border-white/5 text-slate-400"}`}>
-            2. RECOVERY REQUEST
+          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "RECOVERY_REQUESTED" || protocolState === "EVIDENCE_COLLECTION" || protocolState === "CHALLENGE_PERIOD" || protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-950/60 border-white/5 text-slate-400"}`}>
+            02 REQUEST {protocolState !== "ACTIVE" && protocolState !== "RECOVERY_ELIGIBLE" ? "✓" : ""}
           </div>
 
-          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "EVIDENCE_COLLECTION" ? "bg-cyan-600 text-white border-cyan-400 font-bold" : "bg-slate-900/60 border-white/5 text-slate-400"}`}>
-            3. ATTESTATION ({currentApprovalCount}/3)
+          <div className={`p-3 rounded-xl border text-center transition ${evidenceSubmitted ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-950/60 border-white/5 text-slate-400"}`}>
+            03 EVIDENCE {evidenceSubmitted ? "✓" : ""}
           </div>
 
-          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "CHALLENGE_PERIOD" ? "bg-rose-600 text-white border-rose-400 font-bold animate-pulse" : "bg-slate-900/60 border-white/5 text-slate-400"}`}>
-            4. CHALLENGE ({challengeTimer}s)
+          <div className={`p-3 rounded-xl border text-center transition ${currentApprovalCount >= 3 ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-950/60 border-white/5 text-amber-400"}`}>
+            04 ATTESTATION ({currentApprovalCount}/3)
           </div>
 
-          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "bg-emerald-600 text-white border-emerald-400 font-bold" : "bg-slate-900/60 border-white/5 text-slate-400"}`}>
-            5. RELEASED
+          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "CHALLENGE_PERIOD" ? "bg-rose-600 text-white border-rose-400 font-bold animate-pulse" : protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "bg-indigo-600 text-white border-indigo-400 font-bold" : "bg-slate-950/60 border-white/5 text-slate-400"}`}>
+            05 CHALLENGE ({challengeTimer}s)
+          </div>
+
+          <div className={`p-3 rounded-xl border text-center transition ${protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "bg-emerald-600 text-white border-emerald-400 font-bold" : "bg-slate-950/60 border-white/5 text-slate-500"}`}>
+            06 RELEASE {protocolState === "RELEASED" || protocolState === "DECRYPTED" ? "UNLOCKED" : "LOCKED"}
           </div>
         </div>
       </div>
@@ -266,47 +304,47 @@ export default function RecoveryCenterPage() {
       {/* Main Interactive Stage Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column: Asset Info & Controls */}
-        <div className="glass-panel p-6 rounded-3xl border border-surface-border space-y-6">
+        {/* Left Column: Vault Metadata & Demo Controls */}
+        <div className="vault-card p-6 rounded-3xl border border-white/[0.08] space-y-6">
           <h3 className="font-bold text-white text-base flex items-center gap-2">
             <Lock className="w-4 h-4 text-cyan-400" />
-            Protected Vault Metadata
+            Vault Metadata & Controls
           </h3>
 
-          <div className="space-y-3 text-xs">
+          <div className="space-y-3 text-xs font-mono">
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-slate-400">Asset Name:</span>
-              <span className="text-white font-medium">Family Emergency Documents</span>
+              <span className="text-slate-400">ASSET NAME:</span>
+              <span className="text-white font-bold">Family Emergency Vault</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-slate-400">Owner Wallet:</span>
-              <span className="font-mono text-cyan-300">0xf39F...2266</span>
+              <span className="text-slate-400">OWNER WALLET:</span>
+              <span className="text-cyan-300">0xf39F...2266</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-slate-400">Beneficiary Wallet:</span>
-              <span className="font-mono text-indigo-300">0x7099...79C8</span>
+              <span className="text-slate-400">BENEFICIARY:</span>
+              <span className="text-indigo-300">0x7099...79C8</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-slate-400">Required Threshold:</span>
-              <span className="font-mono text-amber-300 font-bold">3 of 5 Approvals</span>
+              <span className="text-slate-400">THRESHOLD:</span>
+              <span className="text-amber-300 font-bold">3 of 5 Approvals</span>
             </div>
-            <div className="flex justify-between border-b border-white/5 pb-2">
-              <span className="text-slate-400">Encryption Scheme:</span>
-              <span className="font-mono text-emerald-400">AES-256-GCM + SSS</span>
+            <div className="flex justify-between">
+              <span className="text-slate-400">ENCRYPTION:</span>
+              <span className="text-emerald-400 font-bold">AES-256-GCM</span>
             </div>
           </div>
 
           {/* Controls to simulate state transitions */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-mono uppercase font-bold text-slate-400">Demo Simulation Controls</h4>
+          <div className="space-y-3 pt-2 font-mono">
+            <h4 className="text-xs uppercase font-bold text-slate-400">PROTOCOL SIMULATION CONTROLS</h4>
 
             {protocolState === "ACTIVE" && (
               <button
                 onClick={handleSimulateInactivity}
-                className="w-full py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-mono text-xs font-bold transition flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition flex items-center justify-center gap-2"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
-                <span>Fast-Forward Inactivity (60s Expiry)</span>
+                <span>FAST-FORWARD INACTIVITY (60s)</span>
               </button>
             )}
 
@@ -314,21 +352,21 @@ export default function RecoveryCenterPage() {
               <button
                 onClick={handleInitiateRecovery}
                 disabled={protocolState === "ACTIVE"}
-                className={`w-full py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 ${
+                className={`w-full py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 ${
                   protocolState === "RECOVERY_ELIGIBLE"
                     ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30"
-                    : "bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5"
+                    : "bg-slate-900 text-slate-600 cursor-not-allowed border border-white/5"
                 }`}
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span>Initiate Protocol Recovery</span>
+                <span>INITIATE RECOVERY PROTOCOL</span>
               </button>
             )}
 
             {(protocolState === "RECOVERY_REQUESTED" || protocolState === "EVIDENCE_COLLECTION" || protocolState === "CHALLENGE_PERIOD") && (
               <button
                 onClick={handleCancelRecovery}
-                className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-2 animate-pulse"
+                className="w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-900/50 transition flex items-center justify-center gap-2 border border-rose-400/30"
               >
                 <XCircle className="w-4 h-4" />
                 <span>CANCEL RECOVERY (EMERGENCY INTERVENTION)</span>
@@ -337,89 +375,91 @@ export default function RecoveryCenterPage() {
           </div>
         </div>
 
-        {/* Right 2 Columns: Attestor Approvals & Challenge / Decryption Card */}
+        {/* Right 2 Columns: Attestor Panel & Challenge Window */}
         <div className="lg:col-span-2 space-y-6">
           
           {/* Attestor Approval Board */}
-          <div className="glass-panel p-6 rounded-3xl border border-surface-border space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="vault-card p-6 rounded-3xl border border-white/[0.08] space-y-4">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
               <div>
                 <h3 className="font-bold text-white text-base flex items-center gap-2">
                   <Key className="w-4 h-4 text-cyan-400" />
-                  Independent Threshold Attestation (3 of 5 Required)
+                  INDEPENDENT ATTESTOR PANEL
                 </h3>
                 <p className="text-slate-400 text-xs">
-                  No single attestor can release assets unilaterally. Each attestor verifies off-chain evidence.
+                  No single attestor can release assets unilaterally. Requires $k=3$ approvals.
                 </p>
               </div>
 
-              <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${
-                currentApprovalCount >= threshold
-                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                  : "bg-amber-500/20 text-amber-400 border-amber-500/40"
-              }`}>
-                {currentApprovalCount} / 5 APPROVALS
-              </span>
+              <div className="text-right font-mono">
+                <span className={`px-3 py-1 rounded-md text-xs font-bold border ${
+                  currentApprovalCount >= threshold
+                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                    : "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                }`}>
+                  {currentApprovalCount} / 5 APPROVALS
+                </span>
+              </div>
             </div>
 
             {/* Evidence Submission Step */}
             {!evidenceSubmitted ? (
-              <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 text-xs text-slate-300">
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-indigo-500/30 flex items-center justify-between gap-4 font-mono text-xs">
+                <div className="flex items-center gap-3 text-slate-300">
                   <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>Submit off-chain evidence (e.g. Legal Record / Medical Certificate hash) to unlock attestor approval.</span>
+                  <span>Submit off-chain evidence (e.g. Legal Record hash) to unlock attestor approvals.</span>
                 </div>
                 <button
                   onClick={handleSubmitEvidence}
                   className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shrink-0 transition"
                 >
-                  Submit Evidence
+                  SUBMIT EVIDENCE
                 </button>
               </div>
             ) : (
               <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Evidence Record Submitted (IPFS CID: QmEvidenceCert88921)</span>
+                <span>EVIDENCE SUBMITTED (IPFS CID: QmEvidenceCert88921)</span>
               </div>
             )}
 
-            {/* Attestor List Cards */}
-            <div className="space-y-2">
+            {/* Attestor Cards (5 Total) */}
+            <div className="space-y-2 font-mono text-xs">
               {DEFAULT_DEMO_ATTESTORS.map((att, idx) => {
                 const isApproved = !!approvals[att.address];
                 return (
                   <div
                     key={idx}
-                    className={`p-4 rounded-2xl border transition flex items-center justify-between ${
+                    className={`p-3.5 rounded-xl border transition flex items-center justify-between ${
                       isApproved
-                        ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-300"
-                        : "bg-slate-900/60 border-white/5 text-slate-300"
+                        ? "bg-emerald-950/20 border-emerald-500/40 text-emerald-300"
+                        : "bg-slate-950/60 border-white/5 text-slate-300"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono text-xs font-bold ${
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold ${
                         isApproved ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"
                       }`}>
                         {idx + 1}
                       </div>
                       <div>
-                        <p className="font-semibold text-xs text-white">{att.name}</p>
-                        <p className="font-mono text-[10px] text-slate-400">{att.address}</p>
+                        <p className="font-semibold text-white">{att.name}</p>
+                        <p className="text-[10px] text-slate-500">{att.address}</p>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleApproveAttestor(att.address)}
                       disabled={isApproved || !evidenceSubmitted}
-                      className={`px-4 py-1.5 rounded-xl font-mono text-xs font-bold transition ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                         isApproved
-                          ? "bg-emerald-500/20 text-emerald-400 cursor-default"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default"
                           : evidenceSubmitted
                           ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow"
-                          : "bg-slate-800 text-slate-600 cursor-not-allowed"
+                          : "bg-slate-900 text-slate-600 cursor-not-allowed border border-white/5"
                       }`}
                     >
-                      {isApproved ? "✓ APPROVED" : "Approve Recovery"}
+                      {isApproved ? "✓ APPROVED" : "APPROVE RECOVERY"}
                     </button>
                   </div>
                 );
@@ -427,31 +467,31 @@ export default function RecoveryCenterPage() {
             </div>
           </div>
 
-          {/* Challenge Timer / Decryption Stage */}
+          {/* Challenge Timer Hero Element */}
           {protocolState === "CHALLENGE_PERIOD" && (
-            <div className="glass-panel p-6 rounded-3xl border border-rose-500/50 space-y-4 bg-rose-950/20 animate-pulse">
+            <div className="vault-card vault-card-danger p-6 rounded-3xl border border-rose-500/50 space-y-4 bg-rose-950/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Clock className="w-6 h-6 text-rose-400 animate-spin" />
                   <div>
-                    <h3 className="font-bold text-white text-base">CHALLENGE PERIOD ACTIVE</h3>
-                    <p className="text-slate-400 text-xs">Owner can halt recovery at any point before timer expires.</p>
+                    <h3 className="font-bold text-white text-base font-mono">CHALLENGE WINDOW ACTIVE</h3>
+                    <p className="text-slate-400 text-xs">Owner intervention remains available before timeout expires.</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-mono font-extrabold text-rose-400">
+                <div className="text-right font-mono">
+                  <span className="text-3xl font-extrabold text-rose-400">
                     00:{challengeTimer < 10 ? `0${challengeTimer}` : challengeTimer}
                   </span>
-                  <span className="block text-[10px] text-slate-400 font-mono">REMAINING COUNTDOWN</span>
+                  <span className="block text-[10px] text-slate-400">REMAINING COUNTDOWN</span>
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   onClick={handleCancelRecovery}
-                  className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg transition"
+                  className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs shadow-lg shadow-rose-900/50 transition border border-rose-400/40"
                 >
-                  CANCEL RECOVERY (EMERGENCY)
+                  [ CANCEL RECOVERY ]
                 </button>
               </div>
             </div>
@@ -459,16 +499,16 @@ export default function RecoveryCenterPage() {
 
           {/* Final Release & Decryption Stage */}
           {(protocolState === "RELEASED" || protocolState === "DECRYPTED") && (
-            <div className="glass-panel p-6 rounded-3xl border border-emerald-500/40 space-y-6 bg-emerald-950/20">
+            <div className="vault-card p-6 rounded-3xl border border-emerald-500/40 space-y-6 bg-emerald-950/20">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
                 <div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
-                    RECOVERY AUTHORIZED & RELEASED
+                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-bold">
+                    RECOVERY COMPLETE
                   </span>
-                  <h3 className="text-lg font-bold text-white mt-1">Beneficiary Key Reconstruction & Decryption</h3>
+                  <h3 className="text-lg font-bold text-white mt-1">Beneficiary Key Reconstruction & Asset Decryption</h3>
                 </div>
               </div>
 
@@ -476,39 +516,39 @@ export default function RecoveryCenterPage() {
                 <button
                   onClick={handleDecryptAsset}
                   disabled={isDecrypting}
-                  className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-3 transition"
+                  className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-3 transition"
                 >
-                  <Key className="w-5 h-5 text-cyan-200" />
-                  <span>{isDecrypting ? "Reconstructing Shamir Keys & Decrypting..." : "RECONSTRUCT KEY & DECRYPT ASSET"}</span>
+                  <Key className="w-4 h-4 text-cyan-200" />
+                  <span>{isDecrypting ? "RECONSTRUCTING SHAMIR KEYS..." : "ACCESS RECOVERED ASSET"}</span>
                 </button>
               ) : (
                 <div className="space-y-4 pt-2">
-                  <div className="p-4 rounded-2xl bg-slate-900 border border-emerald-500/40 space-y-3 font-mono text-xs">
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 space-y-3 font-mono text-xs">
                     <div className="flex justify-between text-emerald-400 font-bold border-b border-white/10 pb-2">
                       <span>✓ Cryptographic Verification Passed</span>
                       <span>KeyEscrow Verified</span>
                     </div>
 
                     <div>
-                      <span className="text-slate-400 block mb-1">Reconstructed Master AES Key:</span>
+                      <span className="text-slate-400 block mb-1">RECONSTRUCTED MASTER AES KEY:</span>
                       <span className="text-cyan-300 break-all">{reconstructedKeyHex}</span>
                     </div>
 
                     <div>
-                      <span className="text-slate-400 block mb-1">Decrypted Asset Payload:</span>
-                      <pre className="p-4 rounded-xl bg-slate-950 border border-white/10 text-cyan-200 font-mono text-xs whitespace-pre-wrap">
+                      <span className="text-slate-400 block mb-1">DECRYPTED ASSET PAYLOAD:</span>
+                      <pre className="p-4 rounded-xl bg-slate-900 border border-white/10 text-cyan-200 font-mono text-xs whitespace-pre-wrap">
                         {decryptedContent}
                       </pre>
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-3">
+                  <div className="flex justify-end gap-3 font-mono text-xs">
                     <Link
                       href="/audit"
-                      className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-white/10 transition flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold border border-white/10 transition flex items-center gap-2"
                     >
                       <Shield className="w-4 h-4 text-indigo-400" />
-                      <span>View Immutable Audit Trail</span>
+                      <span>VIEW IMMUTABLE AUDIT TRAIL</span>
                     </Link>
                   </div>
                 </div>

@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Shield, Key, Clock, CheckCircle2, ExternalLink, Filter, Search, FileCode, AlertTriangle } from "lucide-react";
+import { Shield, Key, Clock, CheckCircle2, ExternalLink, Filter, Search, FileCode, AlertTriangle, Cpu, Database } from "lucide-react";
+import { CONTRACT_ADDRESSES } from "@/lib/web3/config";
 
 interface AuditEvent {
   id: string;
@@ -149,16 +150,16 @@ export default function AuditLogPage() {
     <div className="space-y-8 py-4">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-surface-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white">Verifiable Blockchain Audit Log</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">IMMUTABLE AUDIT TRAIL</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
-              IMMUTABLE EVENTS
+              ON-CHAIN EVENTS
             </span>
           </div>
-          <p className="text-slate-400 text-xs mt-1">
-            Every protocol action emits an immutable smart contract event on BNB Smart Chain.
+          <p className="text-slate-400 text-xs mt-1 font-mono">
+            Every protocol state transition produces an immutable smart contract log event.
           </p>
         </div>
 
@@ -167,33 +168,49 @@ export default function AuditLogPage() {
             href="https://testnet.bscscan.com"
             target="_blank"
             rel="noreferrer"
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-mono border border-white/10 transition flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-mono border border-white/10 transition flex items-center gap-2"
           >
-            <span>Open BscScan Explorer</span>
+            <span>VIEW ON BSCSCAN</span>
             <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
           </a>
         </div>
       </div>
 
+      {/* Infrastructure Telemetry Stats Bar */}
+      <div className="vault-card p-4 rounded-2xl border border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+        <div>
+          <span className="text-slate-500 text-[10px] block mb-0.5">NETWORK</span>
+          <span className="text-white font-bold">BNB SMART CHAIN TESTNET (97)</span>
+        </div>
+        <div>
+          <span className="text-slate-500 text-[10px] block mb-0.5">REGISTRY CONTRACT</span>
+          <span className="text-cyan-300 font-bold">{CONTRACT_ADDRESSES.heirloomRegistry.slice(0, 16)}...</span>
+        </div>
+        <div>
+          <span className="text-slate-500 text-[10px] block mb-0.5">TOTAL IMMUTABLE EVENTS</span>
+          <span className="text-emerald-400 font-bold">09 LOGGED EVENTS</span>
+        </div>
+      </div>
+
       {/* Filter and Search Bar */}
-      <div className="glass-panel p-4 rounded-2xl border border-surface-border flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="vault-card p-4 rounded-2xl border border-white/[0.08] flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative w-full sm:w-96">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by Tx Hash, address, or keyword..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900/80 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+            className="w-full bg-slate-950/80 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs font-mono text-white focus:border-indigo-500 transition"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto font-mono text-xs">
           <Filter className="w-4 h-4 text-slate-400" />
           <select
             value={filterEvent}
             onChange={(e) => setFilterEvent(e.target.value)}
-            className="bg-slate-900/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+            className="bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 transition"
           >
             <option value="ALL">All Event Types</option>
             <option value="AssetRegistered">AssetRegistered</option>
@@ -208,42 +225,42 @@ export default function AuditLogPage() {
         </div>
       </div>
 
-      {/* Chronological Audit Timeline */}
-      <div className="space-y-4">
+      {/* Explorer-Style Chronological Timeline */}
+      <div className="space-y-3">
         {filteredEvents.map((ev) => (
           <div
             key={ev.id}
-            className="glass-panel glass-panel-hover p-5 rounded-2xl border border-surface-border space-y-3 transition"
+            className="vault-card vault-card-hover p-5 rounded-2xl border border-white/[0.08] space-y-3 transition"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5 font-mono text-xs">
               <div className="flex items-center gap-3">
-                <span className={`px-2.5 py-1 rounded-lg border font-mono text-xs font-bold ${getEventBadge(ev.eventName)}`}>
-                  {ev.eventName}
+                <span className={`px-2.5 py-0.5 rounded-md border text-[11px] font-bold ${getEventBadge(ev.eventName)}`}>
+                  ● {ev.eventName}
                 </span>
-                <span className="text-slate-300 text-xs font-semibold">Asset #{ev.assetId}</span>
+                <span className="text-slate-300 font-bold">VAULT #{ev.assetId}</span>
               </div>
 
-              <span className="text-[11px] font-mono text-slate-400">{ev.timestamp}</span>
+              <span className="text-[11px] text-slate-400">{ev.timestamp}</span>
             </div>
 
-            <p className="text-slate-300 text-xs">{ev.details}</p>
+            <p className="text-slate-300 text-xs leading-relaxed">{ev.details}</p>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] font-mono pt-1 text-slate-400">
               <div>
-                <span>Actor: </span>
+                <span>ACTOR: </span>
                 <span className="text-cyan-300">{ev.actor}</span>
-                <span className="mx-2">•</span>
-                <span>Block: #{ev.blockNumber}</span>
+                <span className="mx-2 text-slate-600">•</span>
+                <span>BLOCK: #{ev.blockNumber}</span>
               </div>
 
               <a
                 href={`https://testnet.bscscan.com/tx/${ev.txHash}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1"
+                className="text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1.5 font-bold"
               >
-                <span>Tx: {ev.txHash.slice(0, 14)}...{ev.txHash.slice(-6)}</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>TX: {ev.txHash.slice(0, 14)}...{ev.txHash.slice(-6)}</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
