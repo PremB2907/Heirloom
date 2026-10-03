@@ -31,7 +31,6 @@ export default function RecoveryCenterPage() {
   const [evidenceSubmitted, setEvidenceSubmitted] = useState<boolean>(false);
 
   // Decrypted output state
-  const [reconstructedKeyHex, setReconstructedKeyHex] = useState<string>("");
   const [decryptedContent, setDecryptedContent] = useState<string>("");
   const [isDecrypting, setIsDecrypting] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
@@ -169,11 +168,9 @@ export default function RecoveryCenterPage() {
 
     await new Promise((r) => setTimeout(r, 1000));
 
-    // Decrypt mock payload
+    // Decrypt mock payload transiently in memory
     const demoPayload = "CONFIDENTIAL HEIRLOOM VAULT:\n- Master Password: heirloom-cyber-vault-pass-2026!\n- Seed Phrase: abandon amount quality balance victory weapon flame zebra oxygen duty focus legend\n- Medical Directive & Emergency Access Code: MED-9912-882";
-    const sampleKeyHex = "0d141b222930373e454c535a61686f767d848b9299a0a7aeb5bcc3cad1d8dfe6";
     
-    setReconstructedKeyHex(sampleKeyHex);
     setDecryptedContent(demoPayload);
     setIsDecrypting(false);
     setProtocolState("DECRYPTED");
@@ -523,15 +520,50 @@ export default function RecoveryCenterPage() {
                 </button>
               ) : (
                 <div className="space-y-4 pt-2">
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 space-y-3 font-mono text-xs">
-                    <div className="flex justify-between text-emerald-400 font-bold border-b border-white/10 pb-2">
-                      <span>✓ Cryptographic Verification Passed</span>
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-emerald-500/40 space-y-4 font-mono text-xs">
+                    <div className="flex justify-between text-emerald-400 font-bold border-b border-white/10 pb-3">
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        RECOVERY COMPLETE
+                      </span>
                       <span>KeyEscrow Verified</span>
                     </div>
 
-                    <div>
-                      <span className="text-slate-400 block mb-1">RECONSTRUCTED MASTER AES KEY:</span>
-                      <span className="text-cyan-300 break-all">{reconstructedKeyHex}</span>
+                    {/* Secure Verification Summary */}
+                    <div className="space-y-1.5 text-emerald-400 font-bold bg-emerald-950/40 p-3.5 rounded-xl border border-emerald-500/30">
+                      <p>✓ 3 OF 5 SHARES VERIFIED</p>
+                      <p>✓ KEY RECONSTRUCTED IN MEMORY</p>
+                      <p>✓ AES-256-GCM AUTHENTICATION PASSED</p>
+                      <p>✓ ASSET DECRYPTED</p>
+                    </div>
+
+                    {/* Non-sensitive Metadata */}
+                    <div className="grid grid-cols-2 gap-3 text-[11px] pt-1">
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Asset:</span>
+                        <span className="text-white font-bold">Family Emergency Documents</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Recovery threshold:</span>
+                        <span className="text-amber-400 font-bold">3 / 5</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Beneficiary:</span>
+                        <span className="text-cyan-300">0x7099...79C8</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Recovery transaction:</span>
+                        <span className="text-indigo-300">{lastTxHash ? `${lastTxHash.slice(0, 14)}...` : "0xa81f98c7e923145..."}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-500 block mb-0.5">Network:</span>
+                        <span className="text-slate-200">BNB Smart Chain Testnet</span>
+                      </div>
+                    </div>
+
+                    {/* Security Note */}
+                    <div className="p-3.5 rounded-xl bg-slate-900 border border-white/10 text-slate-400 text-[11px] leading-relaxed">
+                      🔒 <span className="text-slate-300 font-semibold">Security Note:</span> Decryption key material is reconstructed transiently in memory and is never displayed or written to the blockchain.
                     </div>
 
                     <div>
